@@ -1,5 +1,6 @@
 package com.api.rest.SpringSecurity.configurations;
 
+import com.api.rest.SpringSecurity.services.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,17 +13,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -40,7 +34,7 @@ public class SecurityConfiguration {
                     http.requestMatchers(HttpMethod.GET, "/auth/hello").permitAll();
                     /* Configura endpoints privados */
                     http.requestMatchers(HttpMethod.GET, "/auth/helloAuth").hasAuthority("READ");
-                    http.requestMatchers(HttpMethod.GET, "/auth/helloAdmin").hasAuthority("CREATE");
+                    http.requestMatchers(HttpMethod.GET, "/auth/helloAdmin").hasRole("ADMIN");
                     /* Configura endpoints restantes no configurados */
                     http.anyRequest().authenticated();
                 })
@@ -53,28 +47,11 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider() {
+    public AuthenticationProvider authenticationProvider(UserDetailsServiceImpl userDetailsService) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
-        provider.setUserDetailsService(userDetailsService());
+        provider.setUserDetailsService(userDetailsService);
         return provider;
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        List<UserDetails> userDetailsList = new ArrayList<>(Arrays.asList(
-                User.withUsername("ezepetrovich")
-                        .password("1234")
-                        .roles("ADMIN")
-                        .authorities("READ", "CREATE")
-                        .build(),
-                User.withUsername("vicalvarenga")
-                        .password("4321")
-                        .roles("USER")
-                        .authorities("READ")
-                        .build()
-        ));
-        return new InMemoryUserDetailsManager(userDetailsList);
     }
 
     @Bean
